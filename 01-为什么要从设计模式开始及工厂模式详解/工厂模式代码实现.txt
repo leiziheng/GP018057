@@ -1,0 +1,361 @@
+简单工厂：
+
+Iproduct.java
+
+public interface IProduct
+
+{
+
+    void work();
+
+}
+
+
+ 
+
+Product1.java
+
+public class Product1 implements IProduct
+
+{
+
+    @Override
+
+    public void work()
+
+    {
+
+       System.out.println(this.getClass().getSimpleName());
+
+    }
+
+}
+
+
+ 
+
+Product2.java
+
+public class Product2 implements IProduct
+
+{
+
+    @Override
+
+    public void work()
+
+    {
+
+       System.out.println(this.getClass().getSimpleName());
+
+    }
+
+}
+
+
+ 
+
+SimpleFactory.java
+
+
+public class SimpleFactory
+
+{
+
+    public IProduct newProduct(String strcase)
+
+    {
+
+       IProduct pro = null;
+
+       if(strcase.equals("product1"))
+
+       {
+
+           pro = new Product1();
+
+       }
+
+       else
+
+       {
+
+           if(strcase.equals("product2"))
+
+           {
+
+              pro = new Product2();
+
+           }
+
+       }
+
+       return pro;
+
+    }
+
+}
+
+
+ 
+
+SimpleFactoryApp.java
+
+public class SimpleFactoryApp
+
+{
+
+    public static void main(String[] args)
+
+    {
+
+       IFactory factory = new SimpleFactory();
+
+      
+
+       IProduct pro1 = factory.newProduct("product1");
+
+       IProduct pro2 = factory.newProduct("product2");
+
+      
+
+       pro1.work();
+
+       pro2.work();
+
+    }
+
+}
+
+
+工厂方法：
+
+Iproduct.java, Product1.java,Product2.java和上面的一样。
+
+
+ 
+
+ImethodFactory.java
+
+public interface IMethodFactory
+
+{
+
+    IProduct newProduct();
+
+}
+
+
+ 
+
+MethodFactorySub1.java
+
+public class MethodFactorySub1 implements IMethodFactory
+
+{
+
+    @Override
+
+    public IProduct newProduct()
+
+    {
+
+       return new Product1();
+
+    }
+
+}
+
+
+ 
+
+MethodFactorySub2.java
+
+public class MethodFactorySub2 implements IMethodFactory
+
+{
+
+    @Override
+
+    public IProduct newProduct()
+
+    {
+
+       return new Product2();
+
+    }
+
+}
+
+
+ 
+
+MethodFactoryApp.java
+
+public class MethodFactoryApp
+
+{
+
+    /**
+
+     * @param args
+
+     */
+
+    public static void main(String[] args)
+
+    {
+
+       IMethodFactory methodFactory1 = new MethodFactorySub1();
+
+       IMethodFactory methodFactory2 = new MethodFactorySub2();
+
+      
+
+       IProduct pro1 = methodFactory1.newProduct();
+
+       IProduct pro2 = methodFactory2.newProduct();
+
+      
+
+       pro1.work();
+
+       pro2.work();
+
+    }
+
+}
+
+
+抽象工厂：
+
+IAbstractFactory.java
+
+
+public interface IAbstractFactory
+
+{
+
+    IProduct1 getProduct1Instance();
+
+    IProduct2 getProduct2Instance();
+
+}
+
+
+ 
+
+ConcreteFactory1.java ConcreteFactory2和此类似
+
+public class ConcreteFactory1 implements IAbstractFactory {
+
+
+ 
+
+    @Override
+
+    public IProduct1 getProduct1Instance()
+
+    {
+
+       // TODO Auto-generated method stub
+
+       return new Product11();
+
+    }
+
+
+ 
+
+    @Override
+
+    public IProduct2 getProduct2Instance()
+
+    {
+
+       // TODO Auto-generated method stub
+
+       return new Product21();
+
+   }
+
+}
+
+
+ 
+
+IProduct1.java IProduct2和此类似
+
+public interface IProduct1
+
+{
+
+    void dowork1();
+
+}
+
+
+ 
+
+Product11.java Product12、Product21、Product22和此类似
+
+public class Product11 implements IProduct1 {
+
+
+ 
+
+    @Override
+
+    public void dowork1()
+
+    {
+
+       System.out.println(this.getClass().getSimpleName());
+
+    }
+
+
+ 
+
+}
+
+
+ 
+
+AbstractFactoryApp.java
+
+public class AbstractFactoryApp {
+
+
+ 
+
+    /**
+
+     * @param args
+
+     */
+
+    public static void main(String[] args)
+
+    {
+
+       IAbstractFactory factory1 = new ConcreteFactory1();
+
+       factory1.getProduct1Instance().dowork1();
+
+       factory1.getProduct2Instance().dowork2();
+
+      
+
+       IAbstractFactory factory2 = new ConcreteFactory2();
+
+       factory2.getProduct1Instance().dowork1();
+
+       factory2.getProduct2Instance().dowork2();
+
+    }
+
+
+ 
+
+}
