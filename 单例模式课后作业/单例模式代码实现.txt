@@ -1,0 +1,161 @@
+饿汉式（静态常量）：
+public class Singleton {
+
+    private final static Singleton INSTANCE = new Singleton();
+
+    private Singleton(){}
+
+    public static Singleton getInstance(){
+        return INSTANCE;
+    }
+}
+
+饿汉式（静态代码块）：
+public class Singleton {
+
+    private static Singleton instance;
+
+    static {
+        instance = new Singleton();
+    }
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        return instance;
+    }
+}
+
+懒汉式(线程不安全)：
+public class Singleton {
+
+    private static Singleton singleton;
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        if (singleton == null) {
+            singleton = new Singleton();
+        }
+        return singleton;
+    }
+}
+
+懒汉式(线程安全，同步方法)
+public class Singleton {
+
+    private static Singleton singleton;
+
+    private Singleton() {}
+
+    public static synchronized Singleton getInstance() {
+        if (singleton == null) {
+            singleton = new Singleton();
+        }
+        return singleton;
+    }
+}
+
+懒汉式(线程安全，同步代码块)
+public class Singleton {
+
+    private static Singleton singleton;
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        if (singleton == null) {
+            synchronized (Singleton.class) {
+                singleton = new Singleton();
+            }
+        }
+        return singleton;
+    }
+}
+
+懒汉式(双重检查)
+public class Singleton {
+
+    private static volatile Singleton singleton;
+
+    private Singleton() {}
+
+    public static Singleton getInstance() {
+        if (singleton == null) {
+            synchronized (Singleton.class) {
+                if (singleton == null) {
+                    singleton = new Singleton();
+                }
+            }
+        }
+        return singleton;
+    }
+}
+
+懒汉式(静态内部类)
+public class Singleton {
+
+    private Singleton() {}
+
+    private static class SingletonInstance {
+        private static final Singleton INSTANCE = new Singleton();
+    }
+
+    public static Singleton getInstance() {
+        return SingletonInstance.INSTANCE;
+    }
+}
+
+枚举式
+public enum EnumSingleton {
+	INSTANCE;
+	private Object data;
+	
+	public Object getData() {
+		return data;
+	} 
+	public void setData(Object data) {
+		this.data = data;
+	} 
+	public static EnumSingleton getInstance(){
+		return INSTANCE;
+	}
+}
+
+容器式
+public class ContainerSingleton {
+    private ContainerSingleton(){}
+    private static Map<String,Object> ioc = new ConcurrentHashMap<String,Object>();
+    public static Object getInstance(String className){
+        synchronized (ioc) {
+            if (!ioc.containsKey(className)) {
+                Object obj = null;
+                try {
+                    obj = Class.forName(className).newInstance();
+                    ioc.put(className, obj);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return obj;
+            } else {
+                return ioc.get(className);
+            }
+        }
+    }
+}
+
+ThreadLocal 线程单例
+public class ThreadLocalSingleton {
+	private static final ThreadLocal<ThreadLocalSingleton> threadLocalInstance = new ThreadLocal<ThreadLocalSingleton>(){
+		@Override
+		protected ThreadLocalSingleton initialValue() {
+			return new ThreadLocalSingleton();
+		}
+	};
+	
+	private ThreadLocalSingleton(){}
+	
+	public static ThreadLocalSingleton getInstance(){
+		return threadLocalInstance.get();
+	}
+}

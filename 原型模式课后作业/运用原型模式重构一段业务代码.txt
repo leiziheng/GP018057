@@ -1,0 +1,80 @@
+WeeklyLog：周报类
+[Serializable]
+    public class WeeklyLog
+    {
+        public Attachment Attachment { get; set; }
+        public string Name { get; set; }
+        public string Date { get; set; }
+        public string Content { get; set; }
+        /// <summary>
+        /// 使用MemberwiseClone()实现浅克隆
+        /// </summary>
+        /// <returns></returns>
+        //public WeeklyLog Clone()
+        //{
+        //    return (WeeklyLog)this.MemberwiseClone();
+        //}
+
+        //使用序列化的方式实现深克隆
+        public WeeklyLog Clone()
+        {
+            WeeklyLog clone = null;
+            FileStream fs = new FileStream("temp.dat", FileMode.Create);
+            BinaryFormatter formatter = new BinaryFormatter();
+            try
+            {
+                formatter.Serialize(fs, this);
+            }
+            catch (SerializationException e)
+            {
+                Console.WriteLine("Failed to Serialize . Reason :" + e.Message);
+                throw;
+            }
+            finally
+            {
+                fs.Close();
+            }
+            FileStream fs1 = new FileStream("temp.dat", FileMode.Open);
+            BinaryFormatter formatter1 = new BinaryFormatter();
+            try
+            {
+                clone = (WeeklyLog)formatter.Deserialize(fs1);//反序列化
+            }
+            catch (SerializationException e)
+            {
+                Console.WriteLine("Failed to deserialize. Reasion:" + e.Message);
+                throw;
+            }
+            finally
+            {
+                fs1.Close();
+            }
+
+            return clone;
+        }
+    }
+	
+Attachmeht:附件类
+[Serializable]
+    public class Attachment
+	{
+        public string Name { get; set; }
+
+        public void Dowmload()
+        {
+            Console.WriteLine("下载附件，文件名为{0}", Name);
+        }
+    }
+
+客户端代码：
+static void Main(string[] args)
+	{
+		WeeklyLog log, log_new;
+		log = new WeeklyLog();
+		Attachment attchment = new Attachment();
+		log.Attachment = attchment;
+		log_new = log.Clone();
+		System.Console.WriteLine("周报是否相同?{0}",log==log_new ? "是":"否");
+		System.Console.WriteLine("附件是否相同？{0}",log.Attachment == log_new.Attachment ? "是":"否");
+		System.Console.ReadKey();
+	}
