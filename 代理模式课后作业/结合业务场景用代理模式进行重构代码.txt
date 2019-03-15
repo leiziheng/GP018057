@@ -1,0 +1,81 @@
+在WEB的三层架构的业务逻辑层中，每个业务逻辑方法，要么执行成功，提交事务；要么执行失败，回滚事务。
+
+下面用代理的方式实现事务的控制：
+
+
+封装了两个工具类DBUtil, TranscationUtil, 前者用于当前线程的数据库连接的获取和关闭，后者控制当前线程数据库连接事务的处理。
+
+首先，新建动态代理类com.ploy.service.proxy.TranscationProxy类，并使用cglib实现动态代理：
+/**
+ * 数据库事务代理类
+ * 
+ * @author 
+ * 
+ */
+public class TranscationProxy {
+
+       /**
+        * 获得代理对象
+        */
+    public static <T> T getProxy(Class<T> clazz) {
+        Enhancer enhancer = new Enhancer();
+        enhancer.setSuperclass(clazz);
+
+        // 设置回调方法
+        enhancer.setCallback(new MethodInterceptor() {
+
+            /*
+             * 事务方法拦截
+             * @param object 被代理的对象(service对象)
+             * @param method 被调用的方法(原service的某个方)
+             * @param args 被代理的方法的传入参数
+             * @param proxy 多出来的参数是MethodProxy 类型的，它应该是cglib生成用来代替Method对象的一个对象
+             */
+            @Override
+            public Object intercept(Object object, Method method,
+                    Object[] args, MethodProxy proxy) throws Throwable {
+                Object result = null;
+                    // 开启一个全新的事务
+                    TranscationUtil.begin();
+                    try {
+                        result = proxy.invokeSuper(object, args); // 反射执行原有serivce方法
+                        // 执行成功，提交事务
+                        TranscationUtil.commit();
+                    } catch (Exception e) {
+                        // 执行失败回滚事务
+                        TranscationUtil.rollback();
+                        throw e;
+                    }
+            }
+
+        });
+        // 创建一个代理对象
+        return (T) enhancer.create();
+    }
+
+}
+
+然后看看Service工厂类，实际上生产的是具有代理功能的Serice对象:
+
+/**
+ * ServiceFactory类工厂
+ * 
+ * @author 
+ *
+ */
+public class ServiceFactory {
+    private static Map<Class<?>, Object> SERVICE_MAP = new HashMap<>();
+    
+    static {
+        SERVICE_MAP.put(ManagerService.class, TranscationProxy.getProxy(ManagerServiceImpl.class));
+        SERVICE_MAP.put(UserService.class, TranscationProxy.getProxy(UserServiceImpl.class));
+    }
+    
+    
+    public static<T> T getService(Class<T> clazz) {
+        return (T) SERVICE_MAP.get(clazz);
+    }
+    
+}
+
+通过工厂类向控制层注入带有事务功能的service对象。
