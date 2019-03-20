@@ -1,0 +1,40 @@
+电脑接口为USB，假设要接入我这台电脑使用的外设都需要实现 USB 接口才行，抽象为程序如下：
+首先定义一个USB接口，接口中有一个抽象方法，表示拥有USB接口。
+
+public interface USB {
+    void hasUSB();
+}
+　　然后定义两个类，表示有USB接口的键盘和鼠标：
+
+public class UsbKeyboard implements USB {
+    @Override
+    public void hasUSB() {
+        System.out.println("USB键盘有usb接口,能接上电脑使用");
+    }
+}
+public class UsbMouse implements USB {
+    @Override
+    public void hasUSB() {
+        System.out.println("USB鼠标有usb接口,能接上电脑使用");
+    }
+}
+　　测试类如下：
+
+
+public class Test {
+    public static void main(String[] args) {
+        USB usbDevice1 = new UsbKeyboard();
+        USB usbDevice2 = new UsbMouse();
+        canBeUsedForComputer(usbDevice1);
+        canBeUsedForComputer(usbDevice2);
+    }
+    
+    public static void canBeUsedForComputer(USB usbDevice){
+        usbDevice.hasUSB();
+    }
+}
+
+该类很简单。有一个静态方法，canBeUsedForComputer,他接收一个实现USB接口类型的参数。结果如下：
+
+USB键盘有usb接口，能接上电脑使用
+USB鼠标有usb接口，能接上电脑使用
