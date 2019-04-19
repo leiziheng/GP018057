@@ -68,16 +68,19 @@ public class LzhApplicationContext extends LzhDefaultListableBeanFactory impleme
         }
     }
 
-    private void doRegisterBeanDefinition(List<LzhBeanDefinition> beanDefinitions) {
+    private void doRegisterBeanDefinition(List<LzhBeanDefinition> beanDefinitions) throws Exception {
         for (LzhBeanDefinition beanDefinition : beanDefinitions) {
-            super.beanDefinitionMap.put(beanDefinition.getFactoryBeanName(), beanDefinition);
+            if(super.beanDefinitionMap.containsKey(beanDefinition.getFactoryBeanName())){
+                throw new Exception("The “" + beanDefinition.getFactoryBeanName() + "” is exists!!");
+            }
+            super.beanDefinitionMap.put(beanDefinition.getFactoryBeanName(),beanDefinition);
         }
     }
 
 
     @Override
     public Object getBean(Class<?> beanClass) throws Exception {
-        return getBean(beanClass.getSimpleName());
+        return getBean(beanClass.getName());
     }
 
     @Override

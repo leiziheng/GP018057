@@ -3,9 +3,7 @@ package com.lzh.spring.formework.webmvc.servlet;
 import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 
-/**
- * Created by Tom on 2019/4/13.
- */
+
 public class LzhHandlerMapping {
 
     private Object controller;	//保存方法对应的实例

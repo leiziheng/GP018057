@@ -14,10 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +28,7 @@ public class LzhDispatcherServlet extends HttpServlet {
 
     private List<LzhHandlerMapping> handlerMappings = new ArrayList<LzhHandlerMapping>();
 
-    private Map<LzhHandlerMapping,LzhHandlerAdapter> handlerAdapters = new HashMap<LzhHandlerMapping,LzhHandlerAdapter>();
+    private Map<LzhHandlerMapping, LzhHandlerAdapter> handlerAdapters = new HashMap<LzhHandlerMapping, LzhHandlerAdapter>();
 
     private List<LzhViewResolver> viewResolvers = new ArrayList<LzhViewResolver>();
 
@@ -42,20 +39,24 @@ public class LzhDispatcherServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try{
-            this.doDispatch(req,resp);
-        }catch(Exception e){
+        try {
+            this.doDispatch(req, resp);
+        } catch (Exception e) {
+            resp.getWriter().write("500 Exception,Details:\r\n" + Arrays.toString(e.getStackTrace()).replaceAll("\\[|\\]", "").replaceAll(",\\s", "\r\n"));
             e.printStackTrace();
+//            new LzhModelAndView("500");
+
         }
     }
+
 
     private void doDispatch(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 
         //1、通过从request中拿到URL，去匹配一个HandlerMapping
         LzhHandlerMapping handler = getHandler(req);
 
-        if(handler == null){
-            //new ModelAndView("404")
+        if (handler == null) {
+            processDispatchResult(req, resp, new LzhModelAndView("404"));
             return;
         }
 
@@ -63,7 +64,7 @@ public class LzhDispatcherServlet extends HttpServlet {
         LzhHandlerAdapter ha = getHandlerAdapter(handler);
 
         //3、真正的调用方法,返回ModelAndView存储了要穿页面上值，和页面模板的名称
-        LzhModelAndView mv = ha.handle(req,resp,handler);
+        LzhModelAndView mv = ha.handle(req, resp, handler);
 
 
         processDispatchResult(req, resp, mv);
@@ -72,20 +73,24 @@ public class LzhDispatcherServlet extends HttpServlet {
     }
 
     private LzhHandlerMapping getHandler(HttpServletRequest req) throws Exception {
-        if(this.handlerMappings.isEmpty()){ return null; }
+        if (this.handlerMappings.isEmpty()) {
+            return null;
+        }
 
         String url = req.getRequestURI();
         String contextPath = req.getContextPath();
         url = url.replace(contextPath, "").replaceAll("/+", "/");
 
         for (LzhHandlerMapping handler : this.handlerMappings) {
-            try{
+            try {
                 Matcher matcher = handler.getPattern().matcher(url);
                 //如果没有匹配上继续下一个匹配
-                if(!matcher.matches()){ continue; }
+                if (!matcher.matches()) {
+                    continue;
+                }
 
                 return handler;
-            }catch(Exception e){
+            } catch (Exception e) {
                 throw e;
             }
         }
@@ -93,10 +98,30 @@ public class LzhDispatcherServlet extends HttpServlet {
 
     }
 
-    private void processDispatchResult(HttpServletRequest req, HttpServletResponse resp, LzhModelAndView mv) {
+    private void processDispatchResult(HttpServletRequest req, HttpServletResponse resp, LzhModelAndView mv) throws Exception {
+
+        //把给我的ModleAndView变成一个HTML、OuputStream、json、freemark、veolcity
+        //ContextType
+        if(null == mv){return;}
+
+        //如果ModelAndView不为null，怎么办？
+        if(this.viewResolvers.isEmpty()){return;}
+
+        for (LzhViewResolver viewResolver : this.viewResolvers) {
+            LzhView view = viewResolver.resolveViewName(mv.getViewName(),null);
+            view.render(mv.getModel(),req,resp);
+            return;
+        }
     }
 
     private LzhHandlerAdapter getHandlerAdapter(LzhHandlerMapping handler) {
+        if (this.handlerAdapters.isEmpty()) {
+            return null;
+        }
+        LzhHandlerAdapter ha = this.handlerAdapters.get(handler);
+        if (ha.supports(handler)) {
+            return ha;
+        }
         return null;
     }
 
@@ -107,7 +132,6 @@ public class LzhDispatcherServlet extends HttpServlet {
         //2、初始化Spring MVC 九大组件
         initStrategies(context);
     }
-
 
 
     //初始化策略
@@ -155,13 +179,13 @@ public class LzhDispatcherServlet extends HttpServlet {
         //可想而知，他要拿到HandlerMapping才能干活
         //就意味着，有几个HandlerMapping就有几个HandlerAdapter
         for (LzhHandlerMapping handlerMapping : this.handlerMappings) {
-            this.handlerAdapters.put(handlerMapping,new LzhHandlerAdapter());
+            this.handlerAdapters.put(handlerMapping, new LzhHandlerAdapter());
         }
     }
 
     private void initHandlerMappings(LzhApplicationContext context) {
 
-        String [] beanNames = context.getBeanDefinitionNames();
+        String[] beanNames = context.getBeanDefinitionNames();
 
         try {
 
@@ -171,13 +195,13 @@ public class LzhDispatcherServlet extends HttpServlet {
 
                 Class<?> clazz = controller.getClass();
 
-                if(!clazz.isAnnotationPresent(LzhController.class)){
+                if (!clazz.isAnnotationPresent(LzhController.class)) {
                     continue;
                 }
 
                 String baseUrl = "";
                 //获取Controller的url配置
-                if(clazz.isAnnotationPresent(LzhRequestMapping.class)){
+                if (clazz.isAnnotationPresent(LzhRequestMapping.class)) {
                     LzhRequestMapping requestMapping = clazz.getAnnotation(LzhRequestMapping.class);
                     baseUrl = requestMapping.value();
                 }
@@ -187,7 +211,9 @@ public class LzhDispatcherServlet extends HttpServlet {
                 for (Method method : methods) {
 
                     //没有加RequestMapping注解的直接忽略
-                    if(!method.isAnnotationPresent(LzhRequestMapping.class)){ continue; }
+                    if (!method.isAnnotationPresent(LzhRequestMapping.class)) {
+                        continue;
+                    }
 
                     //映射URL
                     LzhRequestMapping requestMapping = method.getAnnotation(LzhRequestMapping.class);
@@ -195,14 +221,14 @@ public class LzhDispatcherServlet extends HttpServlet {
 
                     //  (//demo//query)
 
-                    String regex = ("/" + baseUrl + "/" + requestMapping.value().replaceAll("\\*",".*")).replaceAll("/+", "/");
+                    String regex = ("/" + baseUrl + "/" + requestMapping.value().replaceAll("\\*", ".*")).replaceAll("/+", "/");
                     Pattern pattern = Pattern.compile(regex);
 
-                    this.handlerMappings.add(new LzhHandlerMapping(pattern,controller,method));
+                    this.handlerMappings.add(new LzhHandlerMapping(pattern, controller, method));
                     log.info("Mapped " + regex + "," + method);
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -218,7 +244,7 @@ public class LzhDispatcherServlet extends HttpServlet {
 
         File templateRootDir = new File(templateRootPath);
         String[] templates = templateRootDir.list();
-        for (int i = 0; i < templates.length; i ++) {
+        for (int i = 0; i < templates.length; i++) {
             //这里主要是为了兼容多模板，所有模仿Spring用List保存
             //在我写的代码中简化了，其实只有需要一个模板就可以搞定
             //只是为了仿真，所有还是搞了个List

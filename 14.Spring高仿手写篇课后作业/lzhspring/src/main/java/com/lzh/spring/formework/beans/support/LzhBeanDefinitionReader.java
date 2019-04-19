@@ -68,39 +68,81 @@ public class LzhBeanDefinitionReader {
 
     //把配置文件中扫描到的所有的配置信息转换为LzhBeanDefinition对象，以便于之后IOC操作方便
     public List<LzhBeanDefinition> loadBeanDefinitions() {
+//        List<LzhBeanDefinition> result = new ArrayList<LzhBeanDefinition>();
+//        try {
+//            for (String className : registyBeanClasses) {
+//                Class<?> beanClass = Class.forName(className);
+//                if (beanClass.isInterface()) {
+//                    continue;
+//                }
+//                result.add(doCreateBeanDefinition(toLowerFirstCase(beanClass.getSimpleName()), beanClass.getName()));
+//                Class<?>[] interfaces = beanClass.getInterfaces();
+//                for (Class<?> i : interfaces) {
+//                    result.add(doCreateBeanDefinition(i.getName(), beanClass.getName()));
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return result;
+
         List<LzhBeanDefinition> result = new ArrayList<LzhBeanDefinition>();
-        for (String className : registyBeanClasses) {
-            LzhBeanDefinition beanDefinition = doCreateBeanDefinition(className);
-            if (null == beanDefinition) {
-                continue;
+        try {
+            for (String className : registyBeanClasses) {
+                Class<?> beanClass = Class.forName(className);
+                //如果是一个接口，是不能实例化的
+                //用它实现类来实例化
+                if(beanClass.isInterface()) { continue; }
+
+                //beanName有三种情况:
+                //1、默认是类名首字母小写
+                //2、自定义名字
+                //3、接口注入
+                result.add(doCreateBeanDefinition(toLowerFirstCase(beanClass.getSimpleName()),beanClass.getName()));
+                result.add(doCreateBeanDefinition(beanClass.getName(),beanClass.getName()));
+
+                Class<?> [] interfaces = beanClass.getInterfaces();
+                for (Class<?> i : interfaces) {
+                    //如果是多个实现类，只能覆盖
+                    //为什么？因为Spring没那么智能，就是这么傻
+                    //这个时候，可以自定义名字
+                    result.add(doCreateBeanDefinition(i.getName(),beanClass.getName()));
+                }
+
             }
-            result.add(beanDefinition);
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return result;
     }
 
     //把每一个配信息解析成一个BeanDefinition
-    private LzhBeanDefinition doCreateBeanDefinition(String className) {
-        try {
-            Class<?> beanClass = null;
+    private LzhBeanDefinition doCreateBeanDefinition(String factoryBeanName, String beanClassName) {
+        LzhBeanDefinition beanDefinition = new LzhBeanDefinition();
+        beanDefinition.setBeanClassName(beanClassName);
+        beanDefinition.setFactoryBeanName(factoryBeanName);
+        return beanDefinition;
 
-            beanClass = Class.forName(className);
-
-            //如果是一个接口，是不能实例化的
-            //用它实现类来实例化
-            if (beanClass.isInterface()) {
-                return null;
-            }
-            LzhBeanDefinition beanDefinition = new LzhBeanDefinition();
-            beanDefinition.setBeanClassName(className);
-            beanDefinition.setFactoryBeanName(beanClass.getSimpleName());
-            return beanDefinition;
-
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+//        try {
+//            Class<?> beanClass = null;
+//
+//            beanClass = Class.forName(className);
+//
+//            //如果是一个接口，是不能实例化的
+//            //用它实现类来实例化
+//            if (beanClass.isInterface()) {
+//                return null;
+//            }
+//            LzhBeanDefinition beanDefinition = new LzhBeanDefinition();
+//            beanDefinition.setBeanClassName(className);
+//            beanDefinition.setFactoryBeanName(beanClass.getSimpleName());
+//            return beanDefinition;
+//
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return null;
 
     }
 

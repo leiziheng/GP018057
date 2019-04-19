@@ -7,10 +7,14 @@ import com.lzh.spring.formework.annotation.LzhAutowired;
 import com.lzh.spring.formework.annotation.LzhController;
 import com.lzh.spring.formework.annotation.LzhRequestMapping;
 import com.lzh.spring.formework.annotation.LzhRequestParam;
+import com.lzh.spring.formework.webmvc.servlet.LzhModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 公布接口url
@@ -27,42 +31,54 @@ public class MyAction {
 	IModifyService modifyService;
 
 	@LzhRequestMapping("/query.json")
-	public void query(HttpServletRequest request, HttpServletResponse response,
-								@LzhRequestParam("name") String name){
+	public LzhModelAndView query(HttpServletRequest request, HttpServletResponse response,
+								 @LzhRequestParam("name") String name){
 		String result = queryService.query(name);
-		out(response,result);
+		return out(response,result);
 	}
 	
 	@LzhRequestMapping("/add*.json")
-	public void add(HttpServletRequest request,HttpServletResponse response,
+	public LzhModelAndView add(HttpServletRequest request,HttpServletResponse response,
 			   @LzhRequestParam("name") String name,@LzhRequestParam("addr") String addr){
-		String result = modifyService.add(name,addr);
-		out(response,result);
+		String result = null;
+		try {
+			result = modifyService.add(name,addr);
+			return out(response,result);
+		} catch (Exception e) {
+//			e.printStackTrace();
+			Map<String,Object> model = new HashMap<String,Object>();
+			model.put("detail",e.getCause().getMessage());
+//			System.out.println(Arrays.toString(e.getStackTrace()).replaceAll("\\[|\\]",""));
+			model.put("stackTrace", Arrays.toString(e.getStackTrace()).replaceAll("\\[|\\]",""));
+			return new LzhModelAndView("500",model);
+		}
+
 	}
 	
 	@LzhRequestMapping("/remove.json")
-	public void remove(HttpServletRequest request,HttpServletResponse response,
+	public LzhModelAndView remove(HttpServletRequest request,HttpServletResponse response,
 		   @LzhRequestParam("id") Integer id){
 		String result = modifyService.remove(id);
-		out(response,result);
+		return out(response,result);
 	}
 	
 	@LzhRequestMapping("/edit.json")
-	public void edit(HttpServletRequest request,HttpServletResponse response,
+	public LzhModelAndView edit(HttpServletRequest request,HttpServletResponse response,
 			@LzhRequestParam("id") Integer id,
 			@LzhRequestParam("name") String name){
 		String result = modifyService.edit(id,name);
-		out(response,result);
+		return out(response,result);
 	}
 	
 	
 	
-	private void out(HttpServletResponse resp,String str){
+	private LzhModelAndView out(HttpServletResponse resp,String str){
 		try {
 			resp.getWriter().write(str);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 	
 }
