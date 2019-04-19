@@ -3,8 +3,9 @@ package com.lzh.spring.formework.context;
 import com.lzh.spring.formework.annotation.LzhAutowired;
 import com.lzh.spring.formework.annotation.LzhController;
 import com.lzh.spring.formework.annotation.LzhService;
-import com.lzh.spring.formework.beans.LzhBeanDefinition;
+import com.lzh.spring.formework.beans.config.LzhBeanDefinition;
 import com.lzh.spring.formework.beans.LzhBeanWrapper;
+import com.lzh.spring.formework.beans.config.LzhBeanPostProcessor;
 import com.lzh.spring.formework.beans.support.LzhBeanDefinitionReader;
 import com.lzh.spring.formework.beans.support.LzhDefaultListableBeanFactory;
 import com.lzh.spring.formework.core.LzhBeanFactory;
@@ -12,6 +13,7 @@ import com.lzh.spring.formework.core.LzhBeanFactory;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -79,13 +81,24 @@ public class LzhApplicationContext extends LzhDefaultListableBeanFactory impleme
     }
 
     @Override
-    public Object getBean(String beanName) {
+    public Object getBean(String beanName) throws Exception {
+
+        Object instance = null;
+
+        LzhBeanPostProcessor postProcessor = new LzhBeanPostProcessor();
+
+        postProcessor.postProcessBeforeInitialization(instance, beanName);
 
         //1、初始化
-        LzhBeanWrapper beanWrapper = instantiateBean(beanName,super.beanDefinitionMap.get(beanName));
+        instance = instantiateBean(beanName, super.beanDefinitionMap.get(beanName));
+
+        //3、把这个对象封装到BeanWrapper中
+        LzhBeanWrapper beanWrapper = new LzhBeanWrapper(instance);
 
         //2、拿到BeanWraoper之后，把BeanWrapper保存到IOC容器中去
-        this.factoryBeanInstanceCache.put(beanName,beanWrapper);
+        this.factoryBeanInstanceCache.put(beanName, beanWrapper);
+
+        postProcessor.postProcessAfterInitialization(instance, beanName);
 
         //3、注入
         populateBean(beanName, new LzhBeanDefinition(), beanWrapper);
@@ -140,11 +153,10 @@ public class LzhApplicationContext extends LzhDefaultListableBeanFactory impleme
 
     }
 
-    private LzhBeanWrapper instantiateBean(String beanName, LzhBeanDefinition beanDefinition) {
+    private Object instantiateBean(String beanName, LzhBeanDefinition beanDefinition) {
 
         //1、拿到要实例化的对象的类名
         String className = beanDefinition.getBeanClassName();
-
 
         //2、反射实例化，得到一个对象
         Object instance = null;
@@ -163,12 +175,18 @@ public class LzhApplicationContext extends LzhDefaultListableBeanFactory impleme
             e.printStackTrace();
         }
 
-        LzhBeanWrapper beanWrapper = new LzhBeanWrapper(instance);
-
-        return beanWrapper;
-
-
+        return instance;
     }
 
+    public String[] getBeanDefinitionNames() {
+        return this.beanDefinitionMap.keySet().toArray(new String[this.beanDefinitionMap.size()]);
+    }
 
+    public int getBeanDefinitionCount() {
+        return this.beanDefinitionMap.size();
+    }
+
+    public Properties getConfig() {
+        return this.reader.getConfig();
+    }
 }

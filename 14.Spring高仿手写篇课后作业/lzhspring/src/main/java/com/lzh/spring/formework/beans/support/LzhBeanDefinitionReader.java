@@ -1,6 +1,6 @@
 package com.lzh.spring.formework.beans.support;
 
-import com.lzh.spring.formework.beans.LzhBeanDefinition;
+import com.lzh.spring.formework.beans.config.LzhBeanDefinition;
 
 import java.io.File;
 import java.io.IOException;
