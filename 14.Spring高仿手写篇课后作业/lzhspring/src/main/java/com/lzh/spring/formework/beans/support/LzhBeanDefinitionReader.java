@@ -46,7 +46,7 @@ public class LzhBeanDefinitionReader {
         //转换为文件路径，实际上就是把.替换为/就OK了
         //this.getClass()
         // this.getClass().getClassLoader()
-        URL url = this.getClass().getResource("/" + scanPackage.replaceAll("\\.", "/"));
+        URL url = this.getClass().getClassLoader().getResource("/" + scanPackage.replaceAll("\\.", "/"));
         File classPath = new File(url.getFile());
         for (File file : classPath.listFiles()) {
             if (file.isDirectory()) {

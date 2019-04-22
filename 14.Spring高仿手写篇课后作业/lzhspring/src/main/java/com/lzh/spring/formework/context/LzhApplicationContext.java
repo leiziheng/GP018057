@@ -3,6 +3,11 @@ package com.lzh.spring.formework.context;
 import com.lzh.spring.formework.annotation.LzhAutowired;
 import com.lzh.spring.formework.annotation.LzhController;
 import com.lzh.spring.formework.annotation.LzhService;
+import com.lzh.spring.formework.aop.LzhAopProxy;
+import com.lzh.spring.formework.aop.LzhCglibAopProxy;
+import com.lzh.spring.formework.aop.LzhJdkDynamicAopProxy;
+import com.lzh.spring.formework.aop.config.LzhAopConfig;
+import com.lzh.spring.formework.aop.support.LzhAdvisedSupport;
 import com.lzh.spring.formework.beans.config.LzhBeanDefinition;
 import com.lzh.spring.formework.beans.LzhBeanWrapper;
 import com.lzh.spring.formework.beans.config.LzhBeanPostProcessor;
@@ -171,6 +176,16 @@ public class LzhApplicationContext extends LzhDefaultListableBeanFactory impleme
             } else {
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
+
+                LzhAdvisedSupport config = instantionAopConfig(beanDefinition);
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+
+                //符合PointCut的规则的话，闯将代理对象
+                if(config.pointCutMatch()) {
+                    instance = createProxy(config).getProxy();
+                }
+                
                 this.singletonObjects.put(className, instance);
                 this.singletonObjects.put(beanDefinition.getFactoryBeanName(), instance);
             }
@@ -179,6 +194,26 @@ public class LzhApplicationContext extends LzhDefaultListableBeanFactory impleme
         }
 
         return instance;
+    }
+
+    private LzhAopProxy createProxy(LzhAdvisedSupport config) {
+
+        Class targetClass = config.getTargetClass();
+        if(targetClass.getInterfaces().length > 0){
+            return new LzhJdkDynamicAopProxy(config);
+        }
+        return new LzhCglibAopProxy(config);
+    }
+
+    private LzhAdvisedSupport instantionAopConfig(LzhBeanDefinition beanDefinition) {
+        LzhAopConfig config = new LzhAopConfig();
+        config.setPointCut(this.reader.getConfig().getProperty("pointCut"));
+        config.setAspectClass(this.reader.getConfig().getProperty("aspectClass"));
+        config.setAspectBefore(this.reader.getConfig().getProperty("aspectBefore"));
+        config.setAspectAfter(this.reader.getConfig().getProperty("aspectAfter"));
+        config.setAspectAfterThrow(this.reader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectAfterThrowingName(this.reader.getConfig().getProperty("aspectAfterThrowingName"));
+        return new LzhAdvisedSupport(config);
     }
 
     public String[] getBeanDefinitionNames() {

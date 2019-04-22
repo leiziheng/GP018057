@@ -4,9 +4,15 @@
 	<classpath>
 		<dir name="D:/lzhspring/target/lzh-spring/WEB-INF/classes">
 			<include name="application.properties"/>
+			<include name="layouts/404.html"/>
+			<include name="layouts/500.html"/>
+			<include name="webdefault.xml"/>
 		</dir>
 		<dir name="D:/lzhspring/target/lzh-spring/WEB-INF/classes">
 			<include name="application.properties"/>
+			<include name="layouts/404.html"/>
+			<include name="layouts/500.html"/>
+			<include name="webdefault.xml"/>
 		</dir>
 		<dir name="D:/lzhspring/src/main/resources">
 			<include name="**/*"/>

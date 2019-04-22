@@ -11,8 +11,10 @@ public class LzhViewResolver {
     private final String DEFAULT_TEMPLATE_SUFFX = ".html";
 
     private File templateRootDir;
-    public LzhViewResolver(String templateRoot) {
 
+    public LzhViewResolver(String templateRoot) {
+        String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
+        templateRootDir = new File(templateRootPath);
     }
 
     public LzhView resolveViewName(String viewName, Locale locale) throws Exception {
